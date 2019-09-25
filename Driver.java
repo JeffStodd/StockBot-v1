@@ -17,7 +17,7 @@ import org.encog.neural.networks.training.propagation.resilient.ResilientPropaga
 import org.encog.neural.networks.training.strategy.SmartMomentum;
 
 public class Driver {
-
+	//testing with BTC data
 	public static final String csv = "StockPredictor/Data.csv";
 	public static final ArrayList<Double> change = new ArrayList<Double>();
 	public static final ArrayList<Double> volume = new ArrayList<Double>();
