@@ -27,6 +27,7 @@ public class Driver {
 
 		BasicNetwork test = generateNetwork();
 		
+		//batch size = 9000
 		double[][][] trainingSet = generateTrainingSet(9000);
 		double [][] input = trainingSet[0];
 		double [][] output = trainingSet[1];
@@ -43,7 +44,7 @@ public class Driver {
 			train.iteration();
 			System.out.println("Epoch #" + epoch + " Error:" + train.getError());
 			epoch++;
-			if(epoch % 5000 == 0)
+			if(epoch % 5000 == 0) //stop at 5000 iterations
 				break; //save network
 		} while(train.getError() > 0.01);
 		train.finishTraining();
@@ -63,7 +64,7 @@ public class Driver {
 				reader.readLine(); //ignore titles
 				while(reader.ready())
 				{
-					String[] str = reader.readLine().split(",");
+					String[] str = reader.readLine().split(","); //split price into [0] and volume into [1]
 					change.add(Double.parseDouble((str[0])));
 					volume.add(Double.parseDouble((str[1])));
 				}
@@ -78,6 +79,7 @@ public class Driver {
 
 	public static void printData(ArrayList<Double> change, ArrayList<Double> volume)
 	{
+		//dumps data into console
 		System.out.println("Change : Volume");
 		for(int i = 0; i < change.size(); i++)
 		{
@@ -89,6 +91,11 @@ public class Driver {
 
 	public static BasicNetwork generateNetwork()
 	{
+		//activation function = sigmoid
+		//first 7 input nodes are price change
+		//last 7 input nodes are volume change
+		//3 hidden layers
+		//output layer with predicted price and volume change
 		BasicNetwork network = new BasicNetwork();
 		network.addLayer(new BasicLayer(new ActivationSigmoid(), false, 14));
 		network.addLayer(new BasicLayer(new ActivationSigmoid(),true,31));
@@ -105,15 +112,19 @@ public class Driver {
 		double[][] input = new double[size][14];
 		double[][] output = new double[size][2];
 		
+		//necessary to prevent out of bounds so index isn't chosen between n-8 and n
 		int max = change.size() - 8;
 		
+		//i < batch size
 		for(int i = 0; i < size; i++)
 		{
+			//setting first 7 nodes
 			int r = (int) (Math.random()*max);
 			for(int j = 0; j < 7; j++)
 			{
 				input[i][j] = change.get(r + j);
 			}
+			//setting last 7 nodes
 			for(int j = 0; j < 7; j++)
 			{
 				input[i][j + 7] = volume.get(r + j);
@@ -128,6 +139,7 @@ public class Driver {
 		return temp;
 	}
 	
+	//test first 7 days and predict 8th in data.csv
 	public static void testNetwork(BasicNetwork network)
 	{
 		System.out.println("Testing Network");
@@ -150,44 +162,6 @@ public class Driver {
 		System.out.println("Actual: " + Arrays.toString(output));
 		
 		System.out.println("Expected: " + change.get(7) + " | " + volume.get(7));
-		/*
-		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
-		try {
-			while(true)
-			{
-				System.out.print("\n> ");
-				String user = input.readLine();
-				char[] temp = user.toCharArray();
-				if(temp.length > 14)
-					break;
-				double [] inputNodes = new double[15];
-				for(int i = 0; i < 15; i++)
-				{
-					if(i < temp.length)
-					{
-						inputNodes[i] = ((double)temp[i]-33)/89;
-					}
-					else inputNodes[i] = 0;
-				}
-				double[] output = new double[15];
-				double[] denormalized = new double[15];
-				network.compute(inputNodes, output);
-				System.out.println(Arrays.toString(output));
-				String str = "";
-				for(int i = 0; i < 15; i++)
-				{
-					str += String.valueOf((char)((output[i] * 89) + 33));
-					denormalized[i] = (output[i] * 89) + 33;
-				}
-				System.out.println(Arrays.toString(denormalized));
-				System.out.println("Input: " + user);
-				System.out.println("Predicted: " + str);
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		*/
 	}
 
 }
