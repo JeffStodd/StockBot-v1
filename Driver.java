@@ -145,12 +145,16 @@ public class Driver {
 		System.out.println("Testing Network");
 		double [] inputNodes = new double[14];
 		double[] output = new double[2];
+		
+		//setting price change nodes
 		System.out.println("Change");
 		for(int j = 0; j < 7; j++)
 		{
 			inputNodes[j] = change.get(j);
 			System.out.println(inputNodes[j]);
 		}
+		
+		//setting volume change nodes
 		System.out.println("Volume");
 		for(int j = 0; j < 7; j++)
 		{
@@ -158,9 +162,11 @@ public class Driver {
 			System.out.println(inputNodes[j + 7]);
 		}
 		
+		//test prediction
 		network.compute(inputNodes, output);
 		System.out.println("Actual: " + Arrays.toString(output));
 		
+		//print expected value
 		System.out.println("Expected: " + change.get(7) + " | " + volume.get(7));
 	}
 
