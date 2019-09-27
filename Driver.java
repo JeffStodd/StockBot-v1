@@ -93,10 +93,12 @@ public class Driver {
 			train.iteration();
 			iter++;
 			epochCompletion = iter/(setSize/batchSize);
-			System.out.println("Epoch #" + epochCompletion + " Iteration #" + iter + " Error:" + train.getError());
 			
 			if(iter%(setSize/batchSize) == 0)
+			{
 				saveNetwork(network, testNetworkLocation);
+				System.out.println("Epoch #" + epochCompletion + " Iteration #" + iter + " Error:" + train.getError());
+			}
 		} while(epochSize >= iter/(setSize/batchSize));
 		train.finishTraining();
 
