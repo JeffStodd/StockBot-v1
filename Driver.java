@@ -30,11 +30,16 @@ public class Driver {
 
 	private static BasicNetwork network;
 
-	public static String testNetworkLocation = "C:/Users/jeffr/Desktop/NeuralNetwork";
+	public static String testNetworkLocation = "Weights";
+
+	public static final int setSize = 1650;
+	public static final int batchSize = 100;
+	public static final int epochSize = 100000;
 
 	public static void main(String[] args) {
 
 		System.out.println("Working Directory = " + System.getProperty("user.dir"));
+		System.out.println(args.length);
 		//args[0] = location, args[1] == boolean create new network
 		if(args.length == 2 && Integer.parseInt(args[1]) == 0)
 		{
@@ -49,16 +54,16 @@ public class Driver {
 		}
 		else
 		{
-			System.out.println("Generating New Network");
+			System.out.println("Loading Default Network");
 			network = loadNetwork(testNetworkLocation);
 		}
 
-
+		
 		//System.out.println(network.dumpWeightsVerbose());
 
 		loadData(change);
 
-		double[][][] trainingSet = generateTrainingSet(1650);
+		double[][][] trainingSet = generateTrainingSet(setSize);
 		
 		double [][] input = trainingSet[0];
 		double [][] output = trainingSet[1];
@@ -66,8 +71,10 @@ public class Driver {
 		System.out.println("Training set generated");
 		MLDataSet trainer = new BasicMLDataSet(input, output);
 
+		
 		final ResilientPropagation train = new ResilientPropagation(network, trainer);
 		//final QuickPropagation train = new QuickPropagation(test, trainer);
+		/*
 		do {
 			train.iteration();
 			if(Double.isNaN(train.getError()))
@@ -77,20 +84,27 @@ public class Driver {
 			}
 			else break;
 		} while(true);
+		*/
 		
-		int epoch = 0;
+		train.setBatchSize(batchSize);
+		long iter = 0;
+		double epochCompletion = 0;
 		do {
 			train.iteration();
-			System.out.println("Epoch #" + epoch + " Error:" + train.getError());
-			epoch++;
-			if(epoch % 2500 == 0)
+			iter++;
+			epochCompletion = iter/(setSize/batchSize);
+			System.out.println("Epoch #" + epochCompletion + " Iteration #" + iter + " Error:" + train.getError());
+			
+			if(iter%(setSize/batchSize) == 0)
 				saveNetwork(network, testNetworkLocation);
-		} while(train.getError() > 0.04 && epoch <= 5000);
-		saveNetwork(network, testNetworkLocation);
+		} while(epochSize >= iter/(setSize/batchSize));
 		train.finishTraining();
 
 		System.out.println("Finished training");
 		testNetwork(network);
+		
+		saveNetwork(network, testNetworkLocation);
+		System.exit(0);
 	}
 
 	public static void loadData(ArrayList<Double> change)
@@ -128,7 +142,8 @@ public class Driver {
 	public static BasicNetwork generateNetwork()
 	{
 		BasicNetwork network = new BasicNetwork();
-		network.addLayer(new BasicLayer(null,true,7));
+		network.addLayer(new BasicLayer(new ActivationTANH(),true,7));
+		
 		network.addLayer(new BasicLayer(new ActivationTANH(),true,15));
 		network.addLayer(new BasicLayer(new ActivationTANH(),true,15));
 		network.addLayer(new BasicLayer(new ActivationTANH(),true,15));
@@ -136,6 +151,7 @@ public class Driver {
 		network.addLayer(new BasicLayer(new ActivationTANH(),true,15));
 		network.addLayer(new BasicLayer(new ActivationTANH(),true,15));
 		network.addLayer(new BasicLayer(new ActivationTANH(),true,15));
+		
 		network.addLayer(new BasicLayer(new ActivationTANH(),true,1));
 		network.getStructure().finalizeStructure();
 		network.reset();
@@ -183,20 +199,26 @@ public class Driver {
 		System.out.println("Testing Network");
 		double [] inputNodes = new double[14];
 		double[] output = new double[2];
-
-		while(true)
+		
+		int day = 0;
+		while(day >= 0 && day < setSize - 8)
 		{
-			System.out.println("Insert day n < 321: ");
-			int day = 0;
+			System.out.println("Insert day n < " + setSize + ", -1 to exit: ");
+			
 			BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 			try {
 				day = Integer.parseInt(input.readLine());
 				if(day < 0)
-					break;
+				{
+					input.close();
+					return;
+				}
 			} catch (NumberFormatException e) {
-				break;
+				e.printStackTrace();
+				return;
 			} catch (IOException e) {
-				break;
+				e.printStackTrace();
+				return;
 			}
 			
 			double local = 0;
@@ -214,9 +236,9 @@ public class Driver {
 			}
 
 			network.compute(inputNodes, output);
-			System.out.println("Bullish/Bearish Prediction: " + output[0]); //inverse sigmoid Math.log(output[0]/(1-output[0]))
+			System.out.println("Bullish/Bearish Confidence: " + output[0]); //inverse sigmoid Math.log(output[0]/(1-output[0]))
 
-			System.out.println("Expected: " + (change.get(day + 7)));
+			System.out.println("Actual Percent Change: " + (change.get(day + 7)));
 		}
 
 	}
