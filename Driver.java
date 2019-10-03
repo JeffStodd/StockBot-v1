@@ -25,9 +25,6 @@ public class Driver {
 	public static final String csv = "Data.csv";
 	public static final ArrayList<Double> change = new ArrayList<Double>();
 
-	public static double sd = -1;
-	public static double mean = -1;
-
 	public static BasicNetwork network;
 	public static TrainingContinuation trainer;
 
@@ -35,8 +32,8 @@ public class Driver {
 	public static String trainerLocation = "TrainingContinuation";
 
 	public static final int setSize = 1650; //1650
-	public static final int batchSize = 165; //165
-	public static final int epochSize = 1000000; //100k
+	public static final int batchSize = 55; //165
+	public static final int epochSize = 200000; //100k
 	
 	public static double [][] input;
 	public static double [][] output;
@@ -79,28 +76,29 @@ public class Driver {
 
 
 		final ResilientPropagation train = new ResilientPropagation(network, dataset);
-
 		train.setBatchSize(batchSize);
+		if(args.length != 2)
+			train.resume(trainer);
+		
 		long iter = 0;
 		double epochCompletion = 0;
 		
-		do {
+		while((epochSize >= iter/(setSize/batchSize) & getActualAccuracy() < 0.90)) //while(train.getError() > .92);//
+		{
 			train.iteration();
 			iter++;
 			epochCompletion = (iter/(setSize/batchSize));
 
 			if(iter%(setSize/batchSize) == 0)
 			{
-				System.out.println("Epoch #" + epochCompletion + " Iteration #" + iter + " Error: " + train.getError());
+				System.out.println("Epoch #" + epochCompletion + " Acc: " + getActualAccuracy() + " Loss: " + train.getError());
 			}
 			else if(epochCompletion%1000 == 0)
 			{
-				TrainingContinuation continuation = train.pause();
-				saveNetwork(network, testNetworkLocation, continuation, trainerLocation);
-				train.resume(continuation);
+				trainer = train.pause();
+				saveNetwork(network, testNetworkLocation, trainer, trainerLocation);
 			}
-		} while(epochSize >= iter/(setSize/batchSize)); 
-			//while(train.getError() > .92);//
+		}
 		train.finishTraining();
 
 		System.out.println("Finished training");
@@ -109,17 +107,25 @@ public class Driver {
 		System.out.println("Sub-Set Accuracy: " + getLocalAccuracy());
 		System.out.println("Full Set Accuracy: " + getActualAccuracy());
 		
-		/*
-		double test[] = {-.76596,.64539,1,.184397,.099291,.198582,.602837};
+		
+		double test[] = {
+				0.286486486,
+				-1,
+				-0.016216216,
+				-0.275675676,
+				-0.837837838,
+				0.297297297,
+				.778378
+};
 		double testOut[] = {0};
 		
 		network.compute(test,testOut);
 		System.out.println(testOut[0]);
-		*/
-		saveNetwork(network, testNetworkLocation, trainer, trainerLocation);
 		
-		testNetwork(network);
-		testNetworkOverall(network);
+		saveNetwork(network, testNetworkLocation, trainer, trainerLocation);
+	
+		//testNetwork(network);
+		//testNetworkOverall(network);
 
 		System.exit(0);
 	}
@@ -131,8 +137,8 @@ public class Driver {
 			reader = new BufferedReader(new FileReader(new File(csv)));
 			try {
 				String [] str = reader.readLine().split(",");
-				sd = Double.parseDouble(str[3]);
-				mean = Double.parseDouble(str[4]);
+				//sd = Double.parseDouble(str[3]);
+				//mean = Double.parseDouble(str[4]);
 				while(reader.ready())
 				{
 					str = reader.readLine().split(",");
@@ -161,6 +167,8 @@ public class Driver {
 		BasicNetwork network = new BasicNetwork();
 		network.addLayer(new BasicLayer(new ActivationTANH(),true,7));
 
+		network.addLayer(new BasicLayer(new ActivationTANH(),true,25));
+		network.addLayer(new BasicLayer(new ActivationTANH(),true,25));
 		network.addLayer(new BasicLayer(new ActivationTANH(),true,25));
 		network.addLayer(new BasicLayer(new ActivationTANH(),true,25));
 		
@@ -239,9 +247,8 @@ public class Driver {
 			double local = 0;
 			for(int j = i; j < i + 7; j++)
 			{
-				local = Math.max(local, change.get(j));
+				local = Math.max(local, Math.abs(change.get(j)));
 			}
-			local = Math.abs(local);
 
 			for(int j = i; j < i + 7; j++)
 			{
@@ -278,7 +285,6 @@ public class Driver {
 				day = Integer.parseInt(user.readLine());
 				if(day < 0)
 				{
-					user.close();
 					return;
 				}
 			} catch (NumberFormatException e) {
@@ -292,9 +298,8 @@ public class Driver {
 			double local = 0;
 			for(int j = 0; j < 7; j++)
 			{
-				local = Math.max(local, input[day][j]);
+				local = Math.max(local, Math.abs(input[day][j]));
 			}
-			local = Math.abs(local);
 
 			System.out.println("Change");
 			for(int j = 0; j < 7; j++)
@@ -327,7 +332,6 @@ public class Driver {
 				day = Integer.parseInt(input.readLine());
 				if(day < 0)
 				{
-					input.close();
 					return;
 				}
 			} catch (NumberFormatException e) {
@@ -341,7 +345,7 @@ public class Driver {
 			double local = 0;
 			for(int j = day; j < day + 7; j++)
 			{
-				local = Math.max(local, change.get(j));
+				local = Math.max(local, Math.abs(change.get(j)));
 			}
 			local = Math.abs(local);
 
@@ -360,10 +364,12 @@ public class Driver {
 
 	}
 
+	/*
 	public static double denormalize(double zscore)
 	{
 		return zscore * sd + mean;
 	}
+	*/
 
 	public static void saveNetwork(BasicNetwork network, String networkLoc, TrainingContinuation trainer, String trainLoc)
 	{
@@ -387,14 +393,14 @@ public class Driver {
 	public static void loadNetwork(String networkLoc, String trainLoc)
 	{
 		PersistBasicNetwork persister = new PersistBasicNetwork();
-		PersistTrainingContinuation saveTrainer = new PersistTrainingContinuation();
+		PersistTrainingContinuation loadTrainer = new PersistTrainingContinuation();
 		InputStream reader;
 		try {
 			reader = new FileInputStream(networkLoc);
 			network = (BasicNetwork) persister.read(reader);
 			
 			reader = new FileInputStream(trainLoc);
-			trainer = (TrainingContinuation) saveTrainer.read(reader);
+			trainer = (TrainingContinuation) loadTrainer.read(reader);
 		} catch (FileNotFoundException e) {
 			System.out.println("Failed to load!");
 			e.printStackTrace();

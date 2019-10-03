@@ -1,0 +1,33 @@
+1 hidden layer
+.968 -> .937 at 1k iterations
+Accuracy at .91 loss:
+Sub-Set Accuracy: 0.598
+Full Set Accuracy: 0.5423829282750444
+
+2 hidden layers
+0.965 -> .919 and .928 at 1k iterations
+Accuracy at .91 loss:
+Sub-Set Accuracy: 0.5733333333333334
+Full Set Accuracy: 0.5163011262596325
+34k iterations:
+Sub-Set Accuracy: 0.7624242424242424
+Full Set Accuracy: 0.6081802015411973
+200k iterations:
+.71 acc
+
+3 hidden layers
+.965 -> .934 at 1k iterations
+Accuracy at .91 loss: 
+Sub-Set Accuracy: 0.5913333333333334
+Full Set Accuracy: 0.5305275637225845
+34k itterations:
+Sub-Set Accuracy: 0.76
+Full Set Accuracy: 0.56
+200k iterations:
+.78 acc
+
+4 hidden layers
+0.9696 -> 0.937 at 1k iterations
+Accuracy at .91 loss:
+Sub-Set Accuracy: 0.574
+Full Set Accuracy: 0.5299347954949615
